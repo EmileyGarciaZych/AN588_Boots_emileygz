@@ -9,14 +9,18 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-[1] Using the “KamilarAndCooperData.csv” dataset, run a linear regression looking at log(HomeRange_km2) in relation to log(Body_mass_female_mean) and report your β coeffiecients (slope and intercept).
+# Homework 5: Boots for Days! 
+
+Emiley Garcia-Zych
+
+## [1] Using the "KamilarAndCooperData.csv" dataset, run a linear regression looking at log(HomeRange_km2) in relation to log(Body_mass_female_mean) and report your β coeffiecients (slope and intercept).
 
 ```{r}
 library ('curl')
 k_and_c <- curl("https://raw.githubusercontent.com/fuzzyatelin/fuzzyatelin.github.io/master/AN588_Fall23/KamilarAndCooperData.csv")
 d <- read.csv(k_and_c, header = TRUE, sep = ",", stringsAsFactors = FALSE)
 d <- na.omit(d) ## omit incomplete data
-d
+head(d)
 ```
 
 ```{r}
@@ -25,8 +29,16 @@ model <- lm(HomeRange_km2 ~ Body_mass_female_mean, data = d)
 summary_lm <- summary(model)
 slope_estimate <- summary_lm["coefficients"] ##calculate slope
 slope_estimate
+
+confint(model, level = 0.95)
+
 ```
-[2] Then, use bootstrapping to sample from your data 1000 times with replacement, each time fitting the same model and calculating the same coefficients. This generates a sampling distribution for each β coefficient.
+
+Slope = 9.785 x 10\^-5
+
+Intercept = 1.631
+
+## [2] Then, use bootstrapping to sample from your data 1000 times with replacement, each time fitting the same model and calculating the same coefficients. This generates a sampling distribution for each β coefficient.
 
 ```{r}
 #load required library 
@@ -35,8 +47,8 @@ library(boot)
 #create a function for model fitting + bootstrapping 
 boot_lm <- function (data, indices) {
   sample_data <- data[indices, ]
-  model<- lm(HomeRange_km2 ~ Body_mass_female_mean, data = sample_data)
-  return(coef(model))
+  model1<- lm(HomeRange_km2 ~ Body_mass_female_mean, data = sample_data)
+  return(coef(model1))
 }
 
 #perform bootstrapping 
@@ -48,42 +60,32 @@ boot_coeff <- boot_results$t
 #summarize bootstrapped coefficients
 summary(boot_coeff)
 
+
 ```
 
-Estimate the standard error for each of your β coefficients as the standard deviation of the sampling distribution from your bootstrap and determine the 95% CI for each of your β coefficients based on the appropriate quantiles from your sampling distribution.
+## [3] Estimate the standard error for each of your β coefficients as the standard deviation of the sampling distribution from your bootstrap and determine the 95% CI for each of your β coefficients based on the appropriate quantiles from your sampling distribution.
 
 ```{r}
-# Calculate standard error for each β coefficient
-boot_coeffs <- boot_results$t
-se_boot <- apply(boot_coeffs, 2, sd)
+##calculate standard errors
+se_bootstrap <- apply(boot_coeff, 1, sd)
+summary(se_bootstrap)
 
-# Calculate 95% confidence intervals for each β coefficient
-conf_intervals <- t(sapply(1:ncol(boot_coeffs), function(i) {
-  quantiles <- quantile(boot_coeffs[, i], c(0.025, 0.975))
-  return(quantiles)
-}))
+ci_bootstrap <- apply(boot_coeff, 2, sd)
+summary(ci_bootstrap)
 
-# Create a data frame to display the results
-results <- data.frame(
-  Coefficient = names(se_boot),
-  SE = se_boot,
-  Lower_CI = conf_intervals[, "2.5%"],
-  Upper_CI = conf_intervals[, "97.5%"]
-)
 
-# Print the results
-print(results)
 
 ```
 
+### [3a] How does the former compare to the SE estimated from your entire dataset using the formula for standard error implemented in lm()?
 
+The standard error values estimated from the linear regression model are lower than the computed SE in part 2.
 
-How does the former compare to the SE estimated from your entire dataset using the formula for standard error implemented in lm()?
+### [3b] How does the latter compare to the 95% CI estimated from your entire dataset?
 
-How does the latter compare to the 95% CI estimated from your entire dataset?
+The 95% CI estimated in part 3 is smaller than the CI calculated in part 2.
 
-
-Extra Credit: Write a FUNCTION that takes as its arguments a dataframe, “d”, a linear model, “m” (as a character string, e.g., “logHR~logBM”), a user-defined confidence interval level, “conf.level” (with default = 0.95), and a number of bootstrap replicates, “n” (with default = 1000). Your function should return a dataframe that includes: beta coefficient names; beta coefficients, standard errors, and upper and lower CI limits for the linear model based on your entire dataset; and mean beta coefficient estimates, SEs, and CI limits for those coefficients based on your bootstrap.
+# Extra Credit: Write a FUNCTION that takes as its arguments a dataframe, "d", a linear model, "m" (as a character string, e.g., "logHR\~logBM"), a user-defined confidence interval level, "conf.level" (with default = 0.95), and a number of bootstrap replicates, "n" (with default = 1000). Your function should return a dataframe that includes: beta coefficient names; beta coefficients, standard errors, and upper and lower CI limits for the linear model based on your entire dataset; and mean beta coefficient estimates, SEs, and CI limits for those coefficients based on your bootstrap.
 
 ```{r}
 # Define a function for bootstrap linear regression
@@ -135,50 +137,7 @@ bootstrap_lm <- function(data, formula, conf.level = 0.95, n = 1000) {
 
 ```
 
+# Extra Extra Credit: Graph each beta value from the linear model and its corresponding mean value, lower CI and upper CI from a bootstrap as a function of number of bootstraps from 10 to 200 by 10s. HINT: the beta value from the linear model will be the same for all bootstraps and the mean beta value may not differ that much!
 
-Extra Extra Credit: Graph each beta value from the linear model and its corresponding mean value, lower CI and upper CI from a bootstrap as a function of number of bootstraps from 10 to 200 by 10s. HINT: the beta value from the linear model will be the same for all bootstraps and the mean beta value may not differ that much!
-
-```{r}
-# Function to perform bootstrapping for a given number of replicates
-bootstrap_lm_replicates <- function(data, formula, n_replicates) {
-  set.seed(123)  # Set a fixed seed for reproducibility
-  replicates <- matrix(NA, nrow = n_replicates, ncol = length(coef(lm(formula, data = data)))
-  for (i in 1:n_replicates) {
-    sample_indices <- sample(nrow(data), replace = TRUE)
-    sample_data <- data[sample_indices, ]
-    model <- lm(formula, data = sample_data)
-    replicates[i, ] <- coef(model)
-  }
-  return(replicates)
-}
-
-# Create a sequence of bootstrap sizes from 10 to 200 by 10s
-bootstrap_sizes <- seq(10, 200, by = 10)
-
-# Initialize vectors to store results
-mean_values <- vector("numeric", length(bootstrap_sizes))
-lower_cis <- vector("numeric", length(bootstrap_sizes))
-upper_cis <- vector("numeric", length(bootstrap_sizes))
-
-# Iterate over bootstrap sizes and record mean, lower CI, and upper CI
-for (i in 1:length(bootstrap_sizes)) {
-  n_replicates <- bootstrap_sizes[i]
-  boot_replicates <- bootstrap_lm_replicates(data = d, formula = "logHR~logBM", n_replicates)
-  mean_values[i] <- mean(boot_replicates)
-  cis <- quantile(boot_replicates, c(0.025, 0.975))
-  lower_cis[i] <- cis[1]
-  upper_cis[i] <- cis[2]
-}
-
-# Create a plot
-plot(bootstrap_sizes, coef(lm(logHR ~ logBM, data = d))[2], type = "l", col = "blue", lwd = 2, xlab = "Number of Bootstraps", ylab = "Beta Value")
-lines(bootstrap_sizes, mean_values, type = "l", col = "red", lwd = 2)
-lines(bootstrap_sizes, lower_cis, type = "l", col = "green", lwd = 2, lty = 2)
-lines(bootstrap_sizes, upper_cis, type = "l", col = "green", lwd = 2, lty = 2)
-
-legend("topright", legend = c("Beta Value", "Mean", "Lower CI", "Upper CI"), col = c("blue", "red", "green", "green"), lty = c(1, 1, 2, 2), lwd = 2)
-
+```{}
 ```
-
-
-
