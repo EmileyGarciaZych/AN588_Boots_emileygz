@@ -1,0 +1,92 @@
+---
+title: "emileygz_FinalHomeworkCode_05"
+author: "Emiley Garcia-Zych"
+date: "`r Sys.Date()`"
+output: 
+  prettydoc::html_pretty:
+    theme: cayman
+    toc: true
+---
+
+# Homework 5: Boots for Days!
+
+Emiley Garcia-Zych
+
+## [1] Using the "KamilarAndCooperData.csv" dataset, run a linear regression looking at log(HomeRange_km2) in relation to log(Body_mass_female_mean) and report your β coeffiecients (slope and intercept).
+
+```{r}
+library ('curl')
+k_and_c <- curl("https://raw.githubusercontent.com/fuzzyatelin/fuzzyatelin.github.io/master/AN588_Fall23/KamilarAndCooperData.csv")
+d <- read.csv(k_and_c, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+d <- na.omit(d) ## omit incomplete data
+head(d)
+```
+
+```{r}
+## log(HomeRange_km2) ~ log(Body_mass_female_mean)
+##model <- lm(HomeRange_km2 ~ Body_mass_female_mean, data = d) 
+model <- lm(log(HomeRange_km2) ~ log(Body_mass_female_mean), data = d) ##changed according to peer review
+summary_lm <- summary(model)
+slope_estimate <- summary_lm["coefficients"] ##calculate slope
+slope_estimate
+
+confint(model, level = 0.95)
+```
+
+Slope = -9.750245
+
+Intercept = 1.086790
+
+## [2] Then, use bootstrapping to sample from your data 1000 times with replacement, each time fitting the same model and calculating the same coefficients. This generates a sampling distribution for each β coefficient.
+
+```{r}
+#load required library 
+##method obtained from https://www.statmethods.net/advstats/bootstrapping.html
+library(boot)
+#create a function for model fitting + bootstrapping 
+#boot fucntion : bootobject <- boot(data = , statistic = , R=, ...)
+boot_lm <- function (data, indices) {
+  sample_data <- data[indices, ]
+  model1<- lm(log(HomeRange_km2) ~ log(Body_mass_female_mean), data = sample_data)
+  return(coef(model1))
+}
+
+#perform bootstrapping 
+boot_results <- boot(data = d, statistic = boot_lm, R = 1000)
+
+#get bootstrapped coefficients
+boot_coeff <- boot_results$t
+
+#summarize bootstrapped coefficients
+summary(boot_coeff)
+
+##outputs: V1 is vector 1 (log(HomeRange_km2)), V2 is vector 2(log(Body_mass_female_mean))
+```
+
+## [3] Estimate the standard error for each of your β coefficients as the standard deviation of the sampling distribution from your bootstrap and determine the 95% CI for each of your β coefficients based on the appropriate quantiles from your sampling distribution.
+
+```{r}
+##calculate standard errors
+##the apply function allows you to repetitively perform an action on multiple chunks of data. Essentially a loop. Based on description in https://ademos.people.uic.edu/Chapter4.html
+se_bootstrap <- apply(boot_coeff, 1, sd)
+summary(se_bootstrap)
+
+ci_bootstrap <- apply(boot_coeff, 2, sd)
+summary(ci_bootstrap)
+```
+
+### [3a] How does the former compare to the SE estimated from your entire dataset using the formula for standard error implemented in lm()?
+
+The standard error values estimated from the linear regression model are lower than the computed SE in part 2.
+
+### [3b] How does the latter compare to the 95% CI estimated from your entire dataset?
+
+The 95% CI estimated in part 3 is smaller than the CI calculated in part 2.
+
+## Challenges
+
+1) I struggled with the initial bootstrapping as I kept running into the problem of it only running the first line. I then did research on bootstrapping which cleared it up once I found there was an actual method I could use.
+
+2) I also struggled with understanding how to interpret all my coefficients. I liked how rsibal isolated and printed the data along with its description.
+
+3) Once I decided to switch to code not used in the modules, I struggled to find resources that explained all of it working together. The apply function and bootstrapping both essentially work as big loops so I was able to make it work but I wonder if there is a more effective way to do this.
