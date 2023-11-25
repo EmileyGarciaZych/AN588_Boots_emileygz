@@ -319,12 +319,12 @@ coefficient.</h2>
 <span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="co">#summarize bootstrapped coefficients</span></span>
 <span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="fu">summary</span>(boot_coeff)</span></code></pre></div>
 <pre><code>##        V1                V2        
-##  Min.   :-18.453   Min.   :0.6702  
-##  1st Qu.:-11.125   1st Qu.:0.9735  
-##  Median : -9.831   Median :1.0896  
-##  Mean   :-10.038   Mean   :1.1175  
-##  3rd Qu.: -8.819   3rd Qu.:1.2388  
-##  Max.   : -5.928   Max.   :2.1147</code></pre>
+##  Min.   :-16.467   Min.   :0.5461  
+##  1st Qu.:-10.951   1st Qu.:0.9834  
+##  Median : -9.907   Median :1.1022  
+##  Mean   : -9.985   Mean   :1.1122  
+##  3rd Qu.: -8.869   3rd Qu.:1.2231  
+##  Max.   : -4.726   Max.   :1.8561</code></pre>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="do">##outputs: V1 is vector 1 (log(HomeRange_km2)), V2 is vector 2(log(Body_mass_female_mean))</span></span></code></pre></div>
 </div>
 <div id="estimate-the-standard-error-for-each-of-your-β-coefficients-as-the-standard-deviation-of-the-sampling-distribution-from-your-bootstrap-and-determine-the-95-ci-for-each-of-your-β-coefficients-based-on-the-appropriate-quantiles-from-your-sampling-distribution." class="section level2">
@@ -337,11 +337,11 @@ appropriate quantiles from your sampling distribution.</h2>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>se_bootstrap <span class="ot">&lt;-</span> <span class="fu">apply</span>(boot_coeff, <span class="dv">1</span>, sd)</span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="fu">summary</span>(se_bootstrap)</span></code></pre></div>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   4.675   6.925   7.722   7.888   8.751  14.544</code></pre>
+##   3.730   6.975   7.784   7.847   8.607  12.956</code></pre>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>ci_bootstrap <span class="ot">&lt;-</span> <span class="fu">apply</span>(boot_coeff, <span class="dv">2</span>, sd)</span>
 <span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">summary</span>(ci_bootstrap)</span></code></pre></div>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  0.2114  0.6247  1.0380  1.0380  1.4513  1.8645</code></pre>
+##  0.1922  0.5684  0.9446  0.9446  1.3209  1.6971</code></pre>
 <div id="a-how-does-the-former-compare-to-the-se-estimated-from-your-entire-dataset-using-the-formula-for-standard-error-implemented-in-lm" class="section level3">
 <h3>[3a] How does the former compare to the SE estimated from your
 entire dataset using the formula for standard error implemented in
